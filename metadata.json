@@ -1,0 +1,5 @@
+{
+  "name": "Gestion des Sorties Camions",
+  "description": "Une application pour enregistrer et gérer les sorties des camions, les chauffeurs, les clients et les rapports.",
+  "requestFramePermissions": []
+}

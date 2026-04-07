@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "Driver": {
+      "title": "Chauffeur",
+      "description": "Informations sur le chauffeur du camion.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nom complet du chauffeur" },
+        "registrationNumber": { "type": "string", "description": "Immatriculation du véhicule" },
+        "phone": { "type": "string", "description": "Numéro de téléphone" },
+        "status": { "type": "string", "enum": ["actif", "inactif"], "description": "Statut du chauffeur" }
+      },
+      "required": ["name", "registrationNumber", "phone"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Informations sur le client.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nom de l'entreprise ou du client" },
+        "address": { "type": "string", "description": "Adresse du client" },
+        "contactPerson": { "type": "string", "description": "Personne de contact" },
+        "phone": { "type": "string", "description": "Numéro de téléphone" }
+      },
+      "required": ["name"]
+    },
+    "Pickup": {
+      "title": "Enlèvement",
+      "description": "Enregistrement d'une sortie de camion.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date", "description": "Date de la sortie" },
+        "blNumber": { "type": "string", "description": "Numéro de Bon de Livraison" },
+        "tcNumber": { "type": "string", "description": "Numéro de Conteneur" },
+        "productNature": { "type": "string", "description": "Nature du produit" },
+        "driverId": { "type": "string", "description": "ID du chauffeur (référence)" },
+        "clientId": { "type": "string", "description": "ID du client (référence)" },
+        "registrationNumber": { "type": "string", "description": "Immatriculation du véhicule" },
+        "hhDate": { "type": "string", "format": "date", "description": "Date du HH" },
+        "status": { "type": "string", "enum": ["en_attente", "termine"], "description": "Statut de l'enlèvement" }
+      },
+      "required": ["date", "blNumber", "tcNumber", "productNature", "driverId", "clientId", "registrationNumber", "hhDate"]
+    },
+    "UserProfile": {
+      "title": "Profil Utilisateur",
+      "description": "Informations de profil de l'utilisateur.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "description": "Nom d'affichage" },
+        "email": { "type": "string", "description": "Email de l'utilisateur" },
+        "companyName": { "type": "string", "description": "Nom de l'entreprise" }
+      },
+      "required": ["displayName", "email"]
+    }
+  },
+  "firestore": {
+    "drivers": {
+      "schema": { "$ref": "#/entities/Driver" },
+      "description": "Collection des chauffeurs"
+    },
+    "clients": {
+      "schema": { "$ref": "#/entities/Client" },
+      "description": "Collection des clients"
+    },
+    "pickups": {
+      "schema": { "$ref": "#/entities/Pickup" },
+      "description": "Collection des enlèvements (sorties camions)"
+    },
+    "users": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Profils des utilisateurs"
+    }
+  }
+}

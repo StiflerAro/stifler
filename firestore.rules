@@ -1,0 +1,134 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: drivers
+    // Fields:
+    //   - name: string (required)
+    //   - registrationNumber: string (required)
+    //   - phone: string (required)
+    //   - status: string (enum: actif, inactif)
+    //
+    // Collection: clients
+    // Fields:
+    //   - name: string (required)
+    //   - address: string (optional)
+    //   - contactPerson: string (optional)
+    //   - phone: string (optional)
+    //
+    // Collection: pickups
+    // Fields:
+    //   - date: string (required, ISO 8601)
+    //   - blNumber: string (required)
+    //   - tcNumber: string (required)
+    //   - productNature: string (required)
+    //   - driverId: string (required, foreign key)
+    //   - clientId: string (required, foreign key)
+    //   - registrationNumber: string (required)
+    //   - hhDate: string (required, ISO 8601)
+    //   - status: string (enum: en_attente, termine)
+    //
+    // Collection: users
+    // Fields:
+    //   - displayName: string (required)
+    //   - email: string (required)
+    //   - companyName: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidDriver(data) {
+      return hasRequiredFields(['name', 'registrationNumber', 'phone', 'status']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 200 &&
+             data.registrationNumber is string && data.registrationNumber.size() > 0 && data.registrationNumber.size() < 100 &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() < 50 &&
+             data.status in ['actif', 'inactif'];
+    }
+
+    function isValidPickup(data) {
+      return hasRequiredFields(['date', 'blNumber', 'tcNumber', 'productNature', 'driverId', 'clientId', 'registrationNumber', 'hhDate', 'status']) &&
+             isValidDateString(data.date) &&
+             data.blNumber is string && data.blNumber.size() > 0 && data.blNumber.size() < 100 &&
+             data.tcNumber is string && data.tcNumber.size() > 0 && data.tcNumber.size() < 100 &&
+             data.productNature is string && data.productNature.size() > 0 && data.productNature.size() < 200 &&
+             data.driverId is string &&
+             data.clientId is string &&
+             data.registrationNumber is string && data.registrationNumber.size() > 0 && data.registrationNumber.size() < 100 &&
+             isValidDateString(data.hhDate) &&
+             data.status in ['en_attente', 'termine'];
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && 
+        hasRequiredFields(['displayName', 'email']) &&
+        request.resource.data.displayName is string &&
+        isValidEmail(request.resource.data.email);
+      allow update: if isOwner(userId) &&
+        hasRequiredFields(['displayName', 'email']) &&
+        request.resource.data.displayName is string &&
+        isValidEmail(request.resource.data.email);
+    }
+
+    match /drivers/{driverId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidDriver(request.resource.data);
+      allow update: if isAuthenticated() && isValidDriver(request.resource.data);
+      allow delete: if isAuthenticated();
+    }
+
+    match /clients/{clientId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+        hasRequiredFields(['name']) &&
+        request.resource.data.name is string && request.resource.data.name.size() < 100;
+      allow update: if isAuthenticated() &&
+        request.resource.data.name is string && request.resource.data.name.size() < 100;
+      allow delete: if isAuthenticated();
+    }
+
+    match /pickups/{pickupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPickup(request.resource.data);
+      allow update: if isAuthenticated() && isValidPickup(request.resource.data);
+      allow delete: if isAuthenticated();
+    }
+  }
+}
